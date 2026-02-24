@@ -4,10 +4,17 @@ using UnityEngine.InputSystem;
 public class SimplePlayerMovement : MonoBehaviour
 {
     public float speed = 5f;
+    public float verticalSpeed = 5f;
     public float mouseSensitivity = 2f;
     public Transform cameraTransform;
-
+    private Rigidbody rb;
     float xRotation = 0f;
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+        rb.useGravity = false;
+        rb.freezeRotation = true;
+    }
     void Update()
     {
         if (Keyboard.current == null || Mouse.current == null) return;
@@ -27,10 +34,11 @@ public class SimplePlayerMovement : MonoBehaviour
         if (Keyboard.current.dKey.isPressed)
             direction += transform.right;
         if (Keyboard.current.spaceKey.isPressed)
-            direction += Vector3.up;
+            direction += Vector3.up * verticalSpeed;
         if (Keyboard.current.leftCtrlKey.isPressed)
-            direction -= Vector3.up;
-        transform.position += direction.normalized * speed * Time.deltaTime;
+            direction -= Vector3.up * verticalSpeed;
+        Vector3 currentVelocity = rb.linearVelocity;
+        rb.linearVelocity = new Vector3(direction.x * speed, direction.y, direction.z * speed);
     }
     void HandleMouseLook()
     {
