@@ -12,10 +12,10 @@ public class VoxelManager : MonoBehaviour
     {
         cubeMesh = CreateCubeMesh();
     }
-    public void AddVoxel(Vector3Int gridPos)
+    public void AddVoxel(Vector3Int gridPos, bool force = false)
     {
         if (voxelData.Contains(gridPos)) return;
-        if (gridPos.y != 0 && !HasNeighbor(gridPos)) return;
+        if (!force && gridPos.y != 0 && !HasNeighbor(gridPos)) return;
         voxelData.Add(gridPos);
         Vector3 worldPos = GridToWorld(gridPos);
         GameObject voxel = new GameObject("Voxel");
@@ -98,5 +98,38 @@ public class VoxelManager : MonoBehaviour
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         return mesh;
+    }
+    public class VoxelSaveData
+    {
+        public List<Vector3Int> voxels;
+    }
+    public void SaveModel()
+    {
+        VoxelSaveData saveData = new VoxelSaveData();
+        saveData.voxels = new List<Vector3Int>(voxelData);
+        string json = JsonUtility.ToJson(saveData, true);
+        File.WriteAllText(Application.persistentDataPath + "/voxelSave.json", json);
+        Debug.Log("Model saved!");
+    }
+    public void LoadModel()
+    {
+        string path = Application.persistentDataPath + "/voxelSave.json";
+        if (!File.Exists(path))
+        {
+            Debug.Log("No save file found.");
+            return;
+        }
+        string json = File.ReadAllText(path);
+        VoxelSaveData saveData = JsonUtility.FromJson<VoxelSaveData>(json);
+        int addedCount = 0;
+        foreach (var pos in saveData.voxels)
+        {
+            if (!voxelData.Contains(pos))
+            {
+                AddVoxel(pos, true);
+                addedCount++;
+            }
+        }
+        Debug.Log("Model loaded!");
     }
 }

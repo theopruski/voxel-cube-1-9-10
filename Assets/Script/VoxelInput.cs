@@ -12,6 +12,10 @@ public class VoxelInput : MonoBehaviour
             HandleAction(true);
         if (Keyboard.current.rKey.wasPressedThisFrame)
             HandleAction(false);
+        if (Keyboard.current.f5Key.wasPressedThisFrame)
+            voxelManager.SaveModel();
+        if (Keyboard.current.f9Key.wasPressedThisFrame)
+            voxelManager.LoadModel();
     }
     void HandleAction(bool add)
     {
