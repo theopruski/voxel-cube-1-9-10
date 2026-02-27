@@ -1,3 +1,4 @@
+using UnityEditor;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
@@ -105,18 +106,21 @@ public class VoxelManager : MonoBehaviour
     }
     public void SaveModel()
     {
+        string path = EditorUtility.SaveFilePanel("Save Voxel Model","","voxelSave.json","json");
+        if (string.IsNullOrEmpty(path)) return;
         VoxelSaveData saveData = new VoxelSaveData();
         saveData.voxels = new List<Vector3Int>(voxelData);
         string json = JsonUtility.ToJson(saveData, true);
-        File.WriteAllText(Application.persistentDataPath + "/voxelSave.json", json);
-        Debug.Log("Model saved!");
+        File.WriteAllText(path, json);
+        Debug.Log("Model saved at " + path);
     }
     public void LoadModel()
     {
-        string path = Application.persistentDataPath + "/voxelSave.json";
+        string path = EditorUtility.OpenFilePanel("Load Voxel Model","","json");
+        if (string.IsNullOrEmpty(path)) return;
         if (!File.Exists(path))
         {
-            Debug.Log("No save file found.");
+            Debug.Log("No save file found at " + path);
             return;
         }
         string json = File.ReadAllText(path);
@@ -130,6 +134,6 @@ public class VoxelManager : MonoBehaviour
                 addedCount++;
             }
         }
-        Debug.Log("Model loaded!");
+        Debug.Log("Model loaded from " + path);
     }
 }
