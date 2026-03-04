@@ -30,6 +30,9 @@ public class VoxelInput : MonoBehaviour
         if (Keyboard.current.tKey.wasPressedThisFrame)
             textureManager.ToggleMode();
 
+        if (Keyboard.current.yKey.wasPressedThisFrame)
+            textureManager.ResetToDefaultTextures();
+
         if (Keyboard.current.nKey.wasPressedThisFrame)
         {
             if (textureManager.IsTextureMode())
