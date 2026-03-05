@@ -11,28 +11,20 @@ public class VoxelInput : MonoBehaviour
     void Update()
     {
         if (Keyboard.current == null) return;
-
         if (Keyboard.current.cKey.wasPressedThisFrame)
             HandleAction(true);
-
         if (Keyboard.current.rKey.wasPressedThisFrame)
             HandleAction(false);
-
         if (Keyboard.current.f5Key.wasPressedThisFrame)
             voxelManager.SaveModel();
-
         if (Keyboard.current.f9Key.wasPressedThisFrame)
             voxelManager.LoadModel();
-
         if (Keyboard.current.vKey.wasPressedThisFrame)
             HandleMaterialChange();
-
         if (Keyboard.current.tKey.wasPressedThisFrame)
             textureManager.ToggleMode();
-
         if (Keyboard.current.yKey.wasPressedThisFrame)
             textureManager.ResetToDefaultTextures();
-
         if (Keyboard.current.nKey.wasPressedThisFrame)
         {
             if (textureManager.IsTextureMode())
@@ -40,26 +32,13 @@ public class VoxelInput : MonoBehaviour
             else
                 colorManager.NextColor();
         }
-
-        if (Keyboard.current.bKey.wasPressedThisFrame)
+        if (Keyboard.current.pKey.wasPressedThisFrame)
         {
             if (textureManager.IsTextureMode())
                 textureManager.PreviousTexture();
             else
                 colorManager.PreviousColor();
         }
-
-        for (int i = 0; i < 10; i++)
-        {
-            if (Keyboard.current[(Key)(Key.Digit0 + i)].wasPressedThisFrame)
-            {
-                if (textureManager.IsTextureMode())
-                    textureManager.SetTextureIndex(i);
-                else
-                    colorManager.SetColorIndex(i);
-            }
-        }
-
         if (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed)
         {
             for (int i = 0; i < 10; i++)
@@ -71,7 +50,6 @@ public class VoxelInput : MonoBehaviour
             }
         }
     }
-
     void HandleAction(bool add)
     {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
@@ -101,7 +79,6 @@ public class VoxelInput : MonoBehaviour
             }
         }
     }
-
     void PlaceVoxel(Vector3Int pos)
     {
         if (textureManager.IsTextureMode())
@@ -114,15 +91,12 @@ public class VoxelInput : MonoBehaviour
             voxelManager.AddVoxel(pos, colorManager.GetCurrentColor(), null);
         }
     }
-
     void HandleMaterialChange()
     {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         if (!Physics.Raycast(ray, out RaycastHit hit, maxDistance)) return;
         if (!hit.collider.gameObject.name.StartsWith("Voxel")) return;
-
         Vector3Int pos = voxelManager.WorldToGrid(hit.transform.position);
-
         if (textureManager.IsTextureMode())
         {
             Texture2D texture = textureManager.GetCurrentTexture();

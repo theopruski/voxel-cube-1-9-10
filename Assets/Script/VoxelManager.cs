@@ -11,52 +11,39 @@ public class VoxelManager : MonoBehaviour
     private Dictionary<Vector3Int, Color> voxelColors = new Dictionary<Vector3Int, Color>();
     private Dictionary<Vector3Int, Texture2D> voxelTextures = new Dictionary<Vector3Int, Texture2D>();
     private Mesh cubeMesh;
-
     void Start()
     {
         cubeMesh = CreateCubeMesh();
     }
-
     public void AddVoxel(Vector3Int gridPos, Color color, Texture2D texture = null, bool force = false)
     {
         if (voxelData.Contains(gridPos)) return;
         if (!force && gridPos.y != 0 && !HasNeighbor(gridPos)) return;
-
         voxelData.Add(gridPos);
         voxelColors[gridPos] = color;
-
         if (texture != null)
             voxelTextures[gridPos] = texture;
-
         GameObject voxel = new GameObject("Voxel");
         voxel.transform.position = GridToWorld(gridPos);
         voxel.transform.parent = transform;
-
         MeshFilter meshFilter = voxel.AddComponent<MeshFilter>();
         MeshRenderer meshRenderer = voxel.AddComponent<MeshRenderer>();
         BoxCollider boxCollider = voxel.AddComponent<BoxCollider>();
-
         boxCollider.size = Vector3.one;
         meshFilter.sharedMesh = cubeMesh;
-
         Material instanceMaterial = new Material(voxelMaterial);
         ApplyColorTexture(instanceMaterial, color, texture);
         meshRenderer.material = instanceMaterial;
-
         voxelObjects[gridPos] = voxel;
     }
-
     public void ChangeVoxelMaterial(Vector3Int gridPos, Color newColor, Texture2D newTexture = null)
     {
         if (!voxelData.Contains(gridPos)) return;
-
         voxelColors[gridPos] = newColor;
-
         if (newTexture != null)
             voxelTextures[gridPos] = newTexture;
         else
             voxelTextures.Remove(gridPos);
-
         if (voxelObjects.ContainsKey(gridPos))
         {
             MeshRenderer renderer = voxelObjects[gridPos].GetComponent<MeshRenderer>();
@@ -68,22 +55,18 @@ public class VoxelManager : MonoBehaviour
             }
         }
     }
-
     public void RemoveVoxel(Vector3Int gridPos)
     {
         if (!voxelData.Contains(gridPos)) return;
-
         voxelData.Remove(gridPos);
         voxelColors.Remove(gridPos);
         voxelTextures.Remove(gridPos);
-
         if (voxelObjects.ContainsKey(gridPos))
         {
             Destroy(voxelObjects[gridPos]);
             voxelObjects.Remove(gridPos);
         }
     }
-
     bool HasNeighbor(Vector3Int pos)
     {
         Vector3Int[] directions = new Vector3Int[]
@@ -92,7 +75,6 @@ public class VoxelManager : MonoBehaviour
             Vector3Int.up, Vector3Int.down,
             new Vector3Int(0, 0, 1), new Vector3Int(0, 0, -1)
         };
-
         foreach (var dir in directions)
         {
             if (voxelData.Contains(pos + dir))
@@ -109,37 +91,28 @@ public class VoxelManager : MonoBehaviour
             Mathf.RoundToInt(worldPos.z)
         );
     }
-
     public Vector3 GridToWorld(Vector3Int gridPos)
     {
         return new Vector3(gridPos.x, gridPos.y + 0.5f, gridPos.z);
     }
-
     Mesh CreateCubeMesh()
     {
         Mesh mesh = new Mesh();
-
         Vector3[] v = new Vector3[]
         {
             new Vector3(-0.5f,-0.5f, 0.5f), new Vector3( 0.5f,-0.5f, 0.5f),
             new Vector3( 0.5f, 0.5f, 0.5f), new Vector3(-0.5f, 0.5f, 0.5f),
-
             new Vector3( 0.5f,-0.5f,-0.5f), new Vector3(-0.5f,-0.5f,-0.5f),
             new Vector3(-0.5f, 0.5f,-0.5f), new Vector3( 0.5f, 0.5f,-0.5f),
-
             new Vector3(-0.5f,-0.5f,-0.5f), new Vector3(-0.5f,-0.5f, 0.5f),
             new Vector3(-0.5f, 0.5f, 0.5f), new Vector3(-0.5f, 0.5f,-0.5f),
-
             new Vector3( 0.5f,-0.5f, 0.5f), new Vector3( 0.5f,-0.5f,-0.5f),
             new Vector3( 0.5f, 0.5f,-0.5f), new Vector3( 0.5f, 0.5f, 0.5f),
-
             new Vector3(-0.5f, 0.5f, 0.5f), new Vector3( 0.5f, 0.5f, 0.5f),
             new Vector3( 0.5f, 0.5f,-0.5f), new Vector3(-0.5f, 0.5f,-0.5f),
-
             new Vector3(-0.5f,-0.5f,-0.5f), new Vector3( 0.5f,-0.5f,-0.5f),
             new Vector3( 0.5f,-0.5f, 0.5f), new Vector3(-0.5f,-0.5f, 0.5f),
         };
-
         Vector2[] uv = new Vector2[]
         {
             new Vector2(0,0), new Vector2(1,0), new Vector2(1,1), new Vector2(0,1),
@@ -149,7 +122,6 @@ public class VoxelManager : MonoBehaviour
             new Vector2(0,0), new Vector2(1,0), new Vector2(1,1), new Vector2(0,1),
             new Vector2(0,0), new Vector2(1,0), new Vector2(1,1), new Vector2(0,1),
         };
-
         int[] t = new int[]
         {
             0,2,1, 0,3,2,
@@ -159,23 +131,20 @@ public class VoxelManager : MonoBehaviour
             16,18,17, 16,19,18,
             20,22,21, 20,23,22
         };
-
         mesh.vertices = v;
         mesh.uv = uv;
         mesh.triangles = t;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
-
         return mesh;
     }
-
     [System.Serializable]
     public class VoxelSaveData
     {
         public List<Vector3Int> voxels;
         public List<SerializableColor> colors;
+        public List<string> textures;
     }
-
     [System.Serializable]
     public class SerializableColor
     {
@@ -188,64 +157,82 @@ public class VoxelManager : MonoBehaviour
             b = color.b;
             a = color.a;
         }
-
         public Color ToColor()
         {
             return new Color(r, g, b, a);
         }
     }
-
     public void SaveModel()
     {
         string path = EditorUtility.SaveFilePanel("Save Voxel Model", "", "voxelSave.json", "json");
         if (string.IsNullOrEmpty(path)) return;
-
         VoxelSaveData saveData = new VoxelSaveData
         {
             voxels = new List<Vector3Int>(voxelData),
-            colors = new List<SerializableColor>()
+            colors = new List<SerializableColor>(),
+            textures = new List<string>()
         };
-
         foreach (var pos in saveData.voxels)
         {
-            Color color = voxelColors.ContainsKey(pos) ? voxelColors[pos] : Color.white;
+            Color color;
+            if (voxelColors.ContainsKey(pos))
+                color = voxelColors[pos];
+            else
+                color = Color.white;
             saveData.colors.Add(new SerializableColor(color));
+            Texture2D tex = null;
+            if (voxelTextures.ContainsKey(pos))
+                tex = voxelTextures[pos];
+            if (tex != null)
+            {
+                byte[] pngBytes = tex.EncodeToPNG();
+                string base64 = System.Convert.ToBase64String(pngBytes);
+                saveData.textures.Add(base64);
+            }
+            else
+            {
+                saveData.textures.Add("");
+            }
         }
-
         string json = JsonUtility.ToJson(saveData, true);
         File.WriteAllText(path, json);
     }
-
     public void LoadModel()
     {
         string path = EditorUtility.OpenFilePanel("Load Voxel Model", "", "json");
         if (string.IsNullOrEmpty(path) || !File.Exists(path)) return;
-
         string json = File.ReadAllText(path);
         VoxelSaveData saveData = JsonUtility.FromJson<VoxelSaveData>(json);
-
         for (int i = 0; i < saveData.voxels.Count; i++)
         {
             Vector3Int pos = saveData.voxels[i];
-            if (!voxelData.Contains(pos))
+
+            Color color;
+            if (i < saveData.colors.Count)
+                color = saveData.colors[i].ToColor();
+            else
+                color = Color.white;
+            Texture2D tex = null;
+            if (i < saveData.textures.Count && !string.IsNullOrEmpty(saveData.textures[i]))
             {
-                Color color = (i < saveData.colors.Count) ? saveData.colors[i].ToColor() : Color.white;
-                AddVoxel(pos, color, null, true);
+                byte[] bytes = System.Convert.FromBase64String(saveData.textures[i]);
+                tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                tex.LoadImage(bytes);
+                tex.filterMode = FilterMode.Point;
             }
+
+            AddVoxel(pos, color, tex, true);
         }
     }
-
     void ApplyColorTexture(Material mat, Color color, Texture2D tex)
     {
         if (mat == null) return;
-
         if (mat.HasProperty("_BaseColor"))
             mat.SetColor("_BaseColor", color);
         else if (mat.HasProperty("_Color"))
             mat.SetColor("_Color", color);
         else
             mat.color = color;
-
         if (tex != null)
         {
             if (mat.HasProperty("_BaseMap"))
