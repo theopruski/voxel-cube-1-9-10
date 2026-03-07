@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEngine;
+using SFB;
 
 public class VoxelTextureManager : MonoBehaviour
 {
@@ -397,12 +398,17 @@ public class VoxelTextureManager : MonoBehaviour
         }
     }
 
-#if UNITY_EDITOR
     public void OpenTextureDialog(int slot)
     {
-        string path = UnityEditor.EditorUtility.OpenFilePanel("Load Texture", "", "png,jpg,jpeg");
-        if (!string.IsNullOrEmpty(path))
-            LoadTextureFromFile(path, slot);
+    #if UNITY_EDITOR
+            string path = UnityEditor.EditorUtility.OpenFilePanel("Load Texture", "", "png,jpg,jpeg");
+            if (!string.IsNullOrEmpty(path))
+                LoadTextureFromFile(path, slot);
+    #else
+        var extensions = new[] { new SFB.ExtensionFilter("Images", "png", "jpg", "jpeg") };
+        string[] paths = SFB.StandaloneFileBrowser.OpenFilePanel("Select a texture", "", extensions, false);
+        if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
+            LoadTextureFromFile(paths[0], slot);
+    #endif
     }
-#endif
 }

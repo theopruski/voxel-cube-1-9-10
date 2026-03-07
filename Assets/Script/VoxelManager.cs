@@ -2,7 +2,7 @@ using UnityEditor;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
-
+using SFB;
 public class VoxelManager : MonoBehaviour
 {
     public Material voxelMaterial;
@@ -164,25 +164,39 @@ public class VoxelManager : MonoBehaviour
     }
     public void SaveModel()
     {
-        string path = EditorUtility.SaveFilePanel("Save Voxel Model", "", "voxelSave.json", "json");
+    #if UNITY_EDITOR
+            string path = UnityEditor.EditorUtility.SaveFilePanel("Save Voxel Model", "", "voxelSave.json", "json");
+    #else
+    var extensions = new[] { new SFB.ExtensionFilter("JSON", "json") };
+    string path = SFB.StandaloneFileBrowser.SaveFilePanel("Save Voxel Model", "", "voxelSave.json", extensions);
+    #endif
         if (string.IsNullOrEmpty(path)) return;
-        VoxelSaveData saveData = new VoxelSaveData
-        {
-            voxels = new List<Vector3Int>(voxelData),
-            colors = new List<SerializableColor>(),
-            textures = new List<string>()
-        };
-        foreach (var pos in saveData.voxels)
+        VoxelSaveData saveData = new VoxelSaveData();
+        saveData.voxels = new List<Vector3Int>(voxelData);
+        saveData.colors = new List<SerializableColor>();
+        saveData.textures = new List<string>();
+        foreach (Vector3Int pos in saveData.voxels)
         {
             Color color;
             if (voxelColors.ContainsKey(pos))
+            {
                 color = voxelColors[pos];
+            }
             else
+            {
                 color = Color.white;
+            }
             saveData.colors.Add(new SerializableColor(color));
-            Texture2D tex = null;
+
+            Texture2D tex;
             if (voxelTextures.ContainsKey(pos))
+            {
                 tex = voxelTextures[pos];
+            }
+            else
+            {
+                tex = null;
+            }
             if (tex != null)
             {
                 byte[] pngBytes = tex.EncodeToPNG();
@@ -194,33 +208,53 @@ public class VoxelManager : MonoBehaviour
                 saveData.textures.Add("");
             }
         }
-        string json = JsonUtility.ToJson(saveData, true);
-        File.WriteAllText(path, json);
+        File.WriteAllText(path, JsonUtility.ToJson(saveData, true));
     }
+
     public void LoadModel()
     {
-        string path = EditorUtility.OpenFilePanel("Load Voxel Model", "", "json");
+    #if UNITY_EDITOR
+            string path = UnityEditor.EditorUtility.OpenFilePanel("Load Voxel Model", "", "json");
+    #else
+        var extensions = new[] { new SFB.ExtensionFilter("JSON", "json") };
+        string[] paths = SFB.StandaloneFileBrowser.OpenFilePanel("Load Voxel Model", "", extensions, false);
+        string path;
+        if (paths.Length > 0)
+        {
+            path = paths[0];
+        }
+        else
+        {
+            path = "";
+        }
+    #endif
         if (string.IsNullOrEmpty(path) || !File.Exists(path)) return;
         string json = File.ReadAllText(path);
         VoxelSaveData saveData = JsonUtility.FromJson<VoxelSaveData>(json);
         for (int i = 0; i < saveData.voxels.Count; i++)
         {
             Vector3Int pos = saveData.voxels[i];
-
             Color color;
             if (i < saveData.colors.Count)
-                color = saveData.colors[i].ToColor();
-            else
-                color = Color.white;
-            Texture2D tex = null;
-            if (i < saveData.textures.Count && !string.IsNullOrEmpty(saveData.textures[i]))
             {
-                byte[] bytes = System.Convert.FromBase64String(saveData.textures[i]);
-                tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                tex.LoadImage(bytes);
-                tex.filterMode = FilterMode.Point;
+                color = saveData.colors[i].ToColor();
             }
-
+            else
+            {
+                color = Color.white;
+            }
+            Texture2D tex = null;
+            if (i < saveData.textures.Count)
+            {
+                string texString = saveData.textures[i];
+                if (!string.IsNullOrEmpty(texString))
+                {
+                    byte[] bytes = System.Convert.FromBase64String(texString);
+                    tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                    tex.LoadImage(bytes);
+                    tex.filterMode = FilterMode.Point;
+                }
+            }
             AddVoxel(pos, color, tex, true);
         }
     }
